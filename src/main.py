@@ -22,11 +22,11 @@ pygame.display.set_caption("Evolution")
 # Define parameters
 population_size = 5
 max_population_size = 15
-food_scarcity = 0.0008
-lifespan = 300
+food_scarcity = 0.0004
+lifespan = 10000000
 mutation_rate = 0.02
 reproduction_chance = 0.03  # Chance of reproducing in each frame
-speed_multiplier = Parameters.speed_multipliers[Parameters.speed_index]  # Initial speed multiplier
+speed_multiplier = 1.0  # Initial speed multiplier
 min_speed_multiplier = 0.25
 max_speed_multiplier = 10.0
 
@@ -37,37 +37,30 @@ text_color = (0, 0, 0)  # Text color
 # Define classes
     
 class Organism(pygame.sprite.Sprite):
+    """This class represents an Organism in the simulation"""
+    
     def __init__(self, x, y):
+        """Initialize the Organism"""
         super().__init__()
-        hunger_gained = 0
-        self.image = pygame.Surface((8, 8))
-        self.image.fill(Colors.BLUE)
-        self.rect = self.image.get_rect()
-        self.rect.center = (x, y)
-        self.age = 0
-        self.alive = True
-        self.mutation = random.uniform(-mutation_rate, mutation_rate)
-        self.velocity = [random.uniform(-1, 1), random.uniform(-1, 1)]  # Random initial velocity
-        self.hunger = 5
-        self.max_hunger = 25  # Maximum hunger value
-        self.speed = 1.5 #Organisms freeze if less than 2?
+        hunger_gained = 0  # Tracks the amount of hunger gained by the Organism
+        self.image = pygame.Surface((8, 8))  # Create an image for the Organism
+        self.image.fill(Colors.BLUE)  # Set the color of the Organism
+        self.rect = self.image.get_rect()  # Get the rect associated with the image
+        self.rect.center = (x, y)  # Set the position of the Organism
+        self.age = 0  # Initial age of the Organism
+        self.alive = True  # Flag to indicate if the Organism is alive
+        self.mutation = random.uniform(-mutation_rate, mutation_rate)  # Mutation rate of the Organism
+        self.velocity = [random.uniform(-1, 1), random.uniform(-1, 1)]  # Random initial velocity of the Organism
+        self.hunger = 5  # Initial hunger value of the Organism
+        self.max_hunger = 25  # Maximum hunger value of the Organism
+        self.speed = 2  # Speed of the Organism
+
        
-    class Behavior:
-        
-        def find_nearest_food(self):
-            nearest_food = None
-            nearest_distance = float('inf')
 
-            for food in foods:
-                distance = math.sqrt((self.rect.x - food.rect.x) ** 2 + (self.rect.y - food.rect.y) ** 2)
 
-                if distance < nearest_distance:
-                    nearest_food = food
-                    nearest_distance = distance
-
-            return nearest_food
-
-        def wander(self):
+    def consume_food(self):
+        self.hunger = min(self.hunger + 1, self.max_hunger)
+    def wander(self):
             # Add some random noise to the current velocity
             noise = pygame.math.Vector2(random.uniform(-0.3, 0.3), random.uniform(-0.3, 0.3))
             self.velocity += noise
@@ -75,8 +68,7 @@ class Organism(pygame.sprite.Sprite):
             # Normalize the new velocity and adjust speed
             self.velocity = self.velocity.normalize() * self.speed
 
-        def consume_food(self):
-            self.hunger = min(self.hunger + 1, self.max_hunger)
+
     def update(self):
         if self.alive:
             self.age += 1
@@ -92,30 +84,6 @@ class Organism(pygame.sprite.Sprite):
                 # If no food is available, wander randomly
                 self.wander()
 
-            self.decrease_hunger()  # Decrease hunger over time
-
-            # Find the nearest food source
-            nearest_food = Organism.Behavior.find_nearest_food(self)
-
-            if nearest_food:
-                # Calculate the direction to the nearest food
-                dx = nearest_food.rect.x - self.rect.x
-                dy = nearest_food.rect.y - self.rect.y
-                distance = math.sqrt(dx ** 2 + dy ** 2)
-
-                # Move towards the nearest food source
-                if distance > 0:
-                    self.velocity[0] = dx / distance
-                    self.velocity[1] = dy / distance
-                else:
-                    self.velocity[0] = 0
-                    self.velocity[1] = 0
-
-                # If the organism is close enough to the food, consume it
-                if distance < 5:
-                    foods.remove(nearest_food)
-                    Organism.Behavior.consume_food
-                    
 
             # Update position based on velocity
             self.rect.x += self.velocity[0]
@@ -139,8 +107,6 @@ class Organism(pygame.sprite.Sprite):
                         self.velocity[0] *= -1
                         self.velocity[1] *= -1
 
-    def decrease_hunger(self):
-        self.hunger = max(self.hunger - 0.01, 0)  # Decrease hunger over time
 
 
 def reproduce(organism):
@@ -188,22 +154,30 @@ class Food(pygame.sprite.Sprite):
 
 class FoodItems:
     class Berry:
-        spawn_probability = 0.025
         food_type = "berry"
-        nutrients = 3
-        weight = 1
+        nutrients = random.randrange(8, 12)
+        weight = round(random.uniform(1, 3) / 10, 1)
+        spawn_probability = 0.005  # Adjust as needed
+        
         def __init__(self):
-            self.nutrients = random.randrange(2, 5)
+            self.nutrients = random.randrange(8, 12)
+        
+        def get_nutrition_value(self):
+            return self.nutrients * self.weight
+
     class Seed:
         food_type = "seed"
-        nutrients = 2
-        weight = 0.5
+        nutrients = random.randrange(5, 8)
+        weight = round(random.uniform(3, 5) / 10, 1)
         spawn_probability = 0.003  # Adjust as needed
         def __init__(self):
             self.nutrients = random.randrange(5, 8)
+        def get_nutrition_value(self):
+            return self.nutrients * self.weight
     def __init__(self):
         self.berry = self.Berry()
         self.seed = self.Seed()
+    
 
 # Create sprite groups
 organisms = pygame.sprite.Group()
@@ -255,11 +229,10 @@ while running:
                 organisms.add(organism)
 
             if event.key == pygame.K_RIGHT:  # Increase speed
-                Parameters.speed_index = min(Parameters.speed_index + 1, len(Parameters.speed_multipliers) - 1)
-                speed_multiplier = Parameters.speed_multipliers[Parameters.speed_index]
+                speed_multiplier = min(speed_multiplier * 2, max_speed_multiplier)
             elif event.key == pygame.K_LEFT:  # Decrease speed
-                Parameters.speed_index = max(Parameters.speed_index - 1, 0)
-                speed_multiplier = Parameters.speed_multipliers[Parameters.speed_index]
+                speed_multiplier = max(speed_multiplier / 2, min_speed_multiplier)
+
             elif event.key == pygame.K_r:  # Reset the game when "R" is pressed
                 organisms.empty()
                 foods.empty()
@@ -301,7 +274,6 @@ while running:
     population_count = len(organisms)
     paused_display = paused
 
-    #HUD
     pop_count_text = display_font.render(f"POP: {population_count}", True, text_color)
     screen.blit(pop_count_text, (10, 10))  # Adjust the position as needed
 

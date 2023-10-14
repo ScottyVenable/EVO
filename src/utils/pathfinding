@@ -1,0 +1,75 @@
+import heapq
+
+class Node:
+    def __init__(self, position):
+        self.position = position
+        self.g_cost = float('inf')
+        self.h_cost = None
+        self.parent = None
+    
+    def __lt__(self, other):
+        return self.f_cost() < other.f_cost()
+    
+    def f_cost(self):
+        if self.h_cost is not None:
+            return self.g_cost + self.h_cost
+        else:
+            return float('inf')
+
+def calculate_distance(node1, node2):
+    return abs(node1.position[0] - node2.position[0]) + abs(node1.position[1] - node2.position[1])
+
+def find_path(grid, start, end):
+    open_set = []
+    closed_set = set()
+
+    start_node = Node(start)
+    start_node.g_cost = 0
+    start_node.h_cost = calculate_distance(start_node, Node(end))
+
+    heapq.heappush(open_set, start_node)
+
+    while open_set:
+        current_node = heapq.heappop(open_set)
+
+        if current_node.position == end:
+            path = []
+            while current_node:
+                path.append(current_node.position)
+                current_node = current_node.parent
+            return list(reversed(path))
+        
+        closed_set.add(current_node.position)
+
+        for neighbor_position in get_valid_neighbors(grid, current_node.position):
+            neighbor = Node(neighbor_position)
+            
+            if neighbor.position in closed_set:
+                continue
+            
+            g_cost = current_node.g_cost + calculate_distance(current_node, neighbor)
+            
+            if g_cost < neighbor.g_cost:
+                neighbor.g_cost = g_cost
+                neighbor.h_cost = calculate_distance(neighbor, Node(end))
+                neighbor.parent = current_node
+                
+                if neighbor not in open_set:
+                    heapq.heappush(open_set, neighbor)
+    
+    return None
+
+def get_valid_neighbors(grid, position):
+    neighbors = []
+    x, y = position
+
+    if x > 0:
+        neighbors.append((x-1, y))
+    if x < len(grid[0]) - 1:
+        neighbors.append((x+1, y))
+    if y > 0:
+        neighbors.append((x, y-1))
+    if y < len(grid) - 1:
+        neighbors.append((x, y+1))
+
+    return neighbors
