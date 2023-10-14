@@ -22,7 +22,7 @@ pygame.display.set_caption("Evolution")
 # Define parameters
 population_size = 5
 max_population_size = 15
-food_scarcity = 0.0004
+food_scarcity = 0.0008
 lifespan = 10000000
 mutation_rate = 0.02
 reproduction_chance = 0.03  # Chance of reproducing in each frame
