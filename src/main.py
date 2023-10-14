@@ -26,7 +26,7 @@ food_scarcity = 0.0008
 lifespan = 10000000
 mutation_rate = 0.02
 reproduction_chance = 0.03  # Chance of reproducing in each frame
-speed_multiplier = 1.0  # Initial speed multiplier
+speed_multiplier = Parameters.speed_multipliers[Parameters.speed_index]  # Initial speed multiplier
 min_speed_multiplier = 0.25
 max_speed_multiplier = 10.0
 
@@ -50,7 +50,7 @@ class Organism(pygame.sprite.Sprite):
         self.velocity = [random.uniform(-1, 1), random.uniform(-1, 1)]  # Random initial velocity
         self.hunger = 5
         self.max_hunger = 25  # Maximum hunger value
-        self.speed = 2
+        self.speed = 1.5 #Organisms freeze if less than 2?
        
 
     def find_nearest_food(self):
@@ -228,10 +228,11 @@ while running:
                 organisms.add(organism)
 
             if event.key == pygame.K_RIGHT:  # Increase speed
-                speed_multiplier = min(speed_multiplier * 2, max_speed_multiplier)
+                Parameters.speed_index = min(Parameters.speed_index + 1, len(Parameters.speed_multipliers) - 1)
+                speed_multiplier = Parameters.speed_multipliers[Parameters.speed_index]
             elif event.key == pygame.K_LEFT:  # Decrease speed
-                speed_multiplier = max(speed_multiplier / 2, min_speed_multiplier)
-
+                Parameters.speed_index = max(Parameters.speed_index - 1, 0)
+                speed_multiplier = Parameters.speed_multipliers[Parameters.speed_index]
             elif event.key == pygame.K_r:  # Reset the game when "R" is pressed
                 organisms.empty()
                 foods.empty()
@@ -273,6 +274,7 @@ while running:
     population_count = len(organisms)
     paused_display = paused
 
+    #HUD
     pop_count_text = display_font.render(f"POP: {population_count}", True, text_color)
     screen.blit(pop_count_text, (10, 10))  # Adjust the position as needed
 
