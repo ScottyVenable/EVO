@@ -7,11 +7,12 @@ import pygame_gui
 import game.organism
 import utils.parameters
 import utils.constants
-
+import game.environment
 
 
 Colors = utils.constants.Colors()
 Parameters = utils.parameters
+Environment = GenerateEnvironment()
 
 
 # Initialize Pygame

@@ -1,3 +1,4 @@
+import random
 import pygame
 
 class Rock(pygame.sprite.Sprite):
@@ -9,3 +10,17 @@ class Rock(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
+
+# Class GenerateEnvironment creates a new environment with a Rock object
+class GenerateEnvironment:
+    # Initialize the class by creating a Rock object
+    def __init__(self, x, y, rocks_spawn_rate):
+        self.rock = Rock(x, y)
+        self.rocks_spawn_rate = rocks_spawn_rate
+    
+    # Generate the environment by returning the Rock object
+    def generate(self):
+        if random.random() < self.rocks_spawn_rate:
+            return self.rock
+        else:
+            return None
