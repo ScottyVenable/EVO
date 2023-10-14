@@ -6,4 +6,4 @@ import pygame_gui
 
 # Game
 WIDTH, HEIGHT = 900, 600
-FPS = 30
+FPS = 60

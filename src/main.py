@@ -23,7 +23,7 @@ pygame.display.set_caption("Evolution")
 population_size = 5
 max_population_size = 15
 food_scarcity = 0.0008
-lifespan = 300
+lifespan = 10000000
 mutation_rate = 0.02
 reproduction_chance = 0.03  # Chance of reproducing in each frame
 speed_multiplier = 1.0  # Initial speed multiplier
@@ -50,11 +50,10 @@ class Organism(pygame.sprite.Sprite):
         self.velocity = [random.uniform(-1, 1), random.uniform(-1, 1)]  # Random initial velocity
         self.hunger = 5
         self.max_hunger = 25  # Maximum hunger value
-        self.speed = 1
+        self.speed = 2
        
-    class Behavior:
-        
-        def find_nearest_food(self):
+
+    def find_nearest_food(self):
             nearest_food = None
             nearest_distance = float('inf')
 
@@ -66,8 +65,9 @@ class Organism(pygame.sprite.Sprite):
                     nearest_distance = distance
 
             return nearest_food
-
-        def wander(self):
+    def consume_food(self):
+        self.hunger = min(self.hunger + 1, self.max_hunger)
+    def wander(self):
             # Add some random noise to the current velocity
             noise = pygame.math.Vector2(random.uniform(-0.3, 0.3), random.uniform(-0.3, 0.3))
             self.velocity += noise
@@ -75,8 +75,7 @@ class Organism(pygame.sprite.Sprite):
             # Normalize the new velocity and adjust speed
             self.velocity = self.velocity.normalize() * self.speed
 
-        def consume_food(self):
-            self.hunger = min(self.hunger + 1, self.max_hunger)
+
     def update(self):
         if self.alive:
             self.age += 1
@@ -92,30 +91,6 @@ class Organism(pygame.sprite.Sprite):
                 # If no food is available, wander randomly
                 self.wander()
 
-            self.decrease_hunger()  # Decrease hunger over time
-
-            # Find the nearest food source
-            nearest_food = Organism.Behavior.find_nearest_food(self)
-
-            if nearest_food:
-                # Calculate the direction to the nearest food
-                dx = nearest_food.rect.x - self.rect.x
-                dy = nearest_food.rect.y - self.rect.y
-                distance = math.sqrt(dx ** 2 + dy ** 2)
-
-                # Move towards the nearest food source
-                if distance > 0:
-                    self.velocity[0] = dx / distance
-                    self.velocity[1] = dy / distance
-                else:
-                    self.velocity[0] = 0
-                    self.velocity[1] = 0
-
-                # If the organism is close enough to the food, consume it
-                if distance < 5:
-                    foods.remove(nearest_food)
-                    Organism.Behavior.consume_food
-                    
 
             # Update position based on velocity
             self.rect.x += self.velocity[0]
@@ -139,8 +114,6 @@ class Organism(pygame.sprite.Sprite):
                         self.velocity[0] *= -1
                         self.velocity[1] *= -1
 
-    def decrease_hunger(self):
-        self.hunger = max(self.hunger - 0.01, 0)  # Decrease hunger over time
 
 
 def reproduce(organism):
