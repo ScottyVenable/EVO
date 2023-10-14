@@ -1,18 +1,17 @@
-# Evolution Simulation - Version a013 STABLE -- added seeking for food
+# Evolution Simulation
 import math
 import pygame
 import random
 import pygame.font
 import pygame_gui
-import game.organism
+import gamedata.organism
 import utils.parameters
 import utils.constants
-import game.environment
+from gamedata.environment import GenerateEnvironment
 
 
 Colors = utils.constants.Colors()
 Parameters = utils.parameters
-Environment = GenerateEnvironment()
 
 
 # Initialize Pygame
