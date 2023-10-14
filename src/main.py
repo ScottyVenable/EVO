@@ -4,73 +4,20 @@ import pygame
 import random
 import pygame.font
 import pygame_gui
-
-# Define constants
-WIDTH, HEIGHT = 900, 600
-
-# Colors
-class Colors:
-    # Basic Colors
-    WHITE = (255, 255, 255)
-    BLACK = (0, 0, 0)
-    RED = (255, 0, 0)
-    GREEN = (0, 255, 0)
-    BLUE = (0, 0, 255)
-
-    # Neutral Colors
-    GRAY = (128, 128, 128)
-    LIGHT_GRAY = (192, 192, 192)
-    DARK_GRAY = (64, 64, 64)
-
-    # Warm Colors
-    YELLOW = (255, 255, 0)
-    ORANGE = (255, 165, 0)
-    BROWN = (139, 69, 19)
-
-    # Cool Colors
-    CYAN = (0, 255, 255)
-    MAGENTA = (255, 0, 255)
-    PURPLE = (128, 0, 128)
-
-    # Pastel Colors
-    PINK = (255, 182, 193)
-    LAVENDER = (230, 230, 250)
-    TURQUOISE = (64, 224, 208)
-    MINT_GREEN = (152, 255, 152)
-
-    # Earthy Colors
-    SAND = (244, 164, 96)
-    FOREST_GREEN = (34, 139, 34)
-    SKY_BLUE = (135, 206, 235)
-
-    # Vibrant Colors
-    GOLD = (255, 215, 0)
-    LIME = (0, 255, 0)
-    TANGERINE = (255, 165, 0)
-    ROSE = (255, 0, 127)
-    INDIGO = (75, 0, 130)
-
-    # Gradients
-    SUNSET = [(255, 0, 0), (255, 165, 0), (255, 255, 0)]
-    OCEAN = [(0, 0, 128), (0, 0, 255), (0, 128, 255)]
-    FIRE = [(255, 0, 0), (255, 69, 0), (255, 165, 0)]
-
-    # Random Colors
-    RANDOM1 = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
-    RANDOM2 = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+import game.organism
+import utils.parameters
+import utils.constants
 
 
 
-FPS = 30
-
-
+Colors = utils.constants.Colors()
+Parameters = utils.parameters
 
 
 # Initialize Pygame
 pygame.init()
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
+screen = pygame.display.set_mode((Parameters.WIDTH, Parameters.HEIGHT))
 pygame.display.set_caption("Evolution")
-
 
 # Define parameters
 population_size = 5
@@ -175,14 +122,14 @@ class Organism(pygame.sprite.Sprite):
             self.rect.y += self.velocity[1]
 
             # Wrap around the screen edges (optional)
-            if self.rect.left > WIDTH:
+            if self.rect.left > Parameters.WIDTH:
                 self.rect.right = 0
             elif self.rect.right < 0:
-                self.rect.left = WIDTH
-            if self.rect.top > HEIGHT:
+                self.rect.left = Parameters.WIDTH
+            if self.rect.top > Parameters.HEIGHT:
                 self.rect.bottom = 0
             elif self.rect.bottom < 0:
-                self.rect.top = HEIGHT
+                self.rect.top = Parameters.HEIGHT
 
             # Check for collisions with other organisms and change direction if necessary
             for other_organism in organisms:
@@ -207,8 +154,8 @@ def reproduce(organism):
         new_y = organism.rect.y + distance * math.sin(angle)
 
         # Ensure the new position is within the screen boundaries
-        new_x = max(0, min(WIDTH, new_x))
-        new_y = max(0, min(HEIGHT, new_y))
+        new_x = max(0, min(Parameters.WIDTH, new_x))
+        new_y = max(0, min(Parameters.HEIGHT, new_y))
 
         offspring = Organism(
             organism.rect.x + random.randint(-10, 10),
@@ -236,8 +183,8 @@ class Food(pygame.sprite.Sprite):
             self.image = pygame.Surface((2, 4))
             self.rect = self.image.get_rect()
             self.image.fill(Colors.BROWN)
-        self.rect.x = random.randint(0, WIDTH)
-        self.rect.y = random.randint(0, HEIGHT)
+        self.rect.x = random.randint(0, Parameters.WIDTH)
+        self.rect.y = random.randint(0, Parameters.HEIGHT)
 
 class FoodItems:
     class Berry:
@@ -264,11 +211,11 @@ foods = pygame.sprite.Group()
 
 # Create initial organisms
 for _ in range(population_size):
-    organism = Organism(random.randint(0, WIDTH), random.randint(0, HEIGHT))
+    organism = Organism(random.randint(0, Parameters.WIDTH), random.randint(0, Parameters.HEIGHT))
     organisms.add(organism)
 
 # Create food
-for _ in range(int(WIDTH * HEIGHT * food_scarcity)):
+for _ in range(int(Parameters.WIDTH * Parameters.HEIGHT * food_scarcity)):
     # Determine the type of food to spawn based on probabilities
     food_type = random.choices(["berry", "seed"], [FoodItems.Berry.spawn_probability, FoodItems.Seed.spawn_probability])[0]
 
@@ -316,9 +263,9 @@ while running:
                 organisms.empty()
                 foods.empty()
                 for _ in range(population_size):
-                    organism = Organism(random.randint(0, WIDTH), random.randint(0, HEIGHT))
+                    organism = Organism(random.randint(0, Parameters.WIDTH), random.randint(0, Parameters.HEIGHT))
                     organisms.add(organism)
-                for _ in range(int(WIDTH * HEIGHT * food_scarcity)):
+                for _ in range(int(Parameters.WIDTH * Parameters.HEIGHT * food_scarcity)):
                     berry = Food("berry")
                     seed = Food("seed")
                     foods.add(berry, seed)
@@ -363,6 +310,6 @@ while running:
     screen.blit(speed_text, (10, 50))  # Adjust the position as needed
 
     pygame.display.flip()
-    clock.tick(FPS * speed_multiplier)
+    clock.tick(Parameters.FPS * speed_multiplier)
 
 pygame.quit()
