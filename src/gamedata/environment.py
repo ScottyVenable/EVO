@@ -3,27 +3,19 @@ import pygame
 import math
 import pygame.font
 import pygame_gui
+from utils.constants import Colors
+import utils.parameters
+import gamedata.items
 
-class Rock(pygame.sprite.Sprite):
-    def __init__(self, x, y):
-        super().__init__()
-        self.image = pygame.Surface((20, 20))
-        self.image.fill((128, 128, 128))  # Fill the image with gray color
-        
-        self.rect = self.image.get_rect()
-        self.rect.x = x
-        self.rect.y = y
+Parameters = utils.parameters
+ItemsDatabase = gamedata.items
 
-# Class GenerateEnvironment creates a new environment with a Rock object
 class GenerateEnvironment:
-    # Initialize the class by creating a Rock object
-    def __init__(self, x, y, rocks_spawn_rate):
-        self.rock = Rock(x, y)
-        self.rocks_spawn_rate = rocks_spawn_rate
+    def __init__(self):
+        self.food_items = ItemsDatabase
     
-    # Generate the environment by returning the Rock object
-    def generate(self):
-        if random.random() < self.rocks_spawn_rate:
-            return self.rock
-        else:
-            return None
+    def randomly_spawn_food(self):
+        for food in self.food_items:
+            if food.spawns_naturally:
+                food.rect.x = random.randint(0, Parameters.WIDTH)
+                food.rect.y = random.randint(0, Parameters.HEIGHT)

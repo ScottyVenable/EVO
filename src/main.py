@@ -7,17 +7,84 @@ import pygame_gui
 import gamedata.organism
 import utils.parameters
 import utils.constants
-from gamedata.environment import GenerateEnvironment
-
+import gamedata.environment
+import gamedata.items
+from gamedata.items import Foods
+import datetime
+import os
+from utils.logging import Timestamping
 
 Colors = utils.constants.Colors()
 Parameters = utils.parameters
+ItemDatabase = gamedata.items
 
 
 # Initialize Pygame
 pygame.init()
 screen = pygame.display.set_mode((Parameters.WIDTH, Parameters.HEIGHT))
 pygame.display.set_caption("Evolution")
+
+class CreateLog:
+    logs_directory = "logs"
+
+    def __init__(self, log_filename):
+        self.timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        self.log_file_path = os.path.join(self.logs_directory, f"{log_filename}_{self.timestamp}.txt")
+        os.makedirs(self.logs_directory, exist_ok=True)
+
+    # Create the 'logs' directory if it doesn't exist
+    os.makedirs(logs_directory, exist_ok=True)
+
+generation_log = CreateLog("generation")
+
+# Populate the Data
+
+food_list = [Foods.berry, Foods.hazelnut]
+
+for food in food_list:
+    # Format the output using string formatting
+    print("FOODS LOADED:")
+    print(f"\n--------\n   Name: {food.name}\n   Description: \"{food.description}\"\n   Weight: {food.weight}\n   Type: {food.item_type}\n   Nutrients: {food.nutrients}\n   Spawns Naturally: {'Yes' if food.spawns_naturally else 'No'}\n   Rarity: {'common' if food.spawn_probability >= 0.008 else 'uncommon' if food.spawn_probability >= 0.005 else 'rare' if food.spawn_probability >= 0.002 else 'very rare'}")
+
+spawning_foods = [] # Create the list of foods that spawn naturally
+
+spawning_foods_group = pygame.sprite.Group() # Create the group of sprites for the spawning foods.
+for food in spawning_foods:
+    spawning_foods_group.add(food)
+
+
+for food in food_list: # Add the naturally occuring foods to the list of foods that will spawn when the game starts.
+    if food.spawns_naturally:
+        spawning_foods.append(food)
+
+spawn_probabilities = [food.spawn_probability for food in spawning_foods]
+def generate_natural_food():
+    generated_food = random.choices(spawning_foods, weights=spawn_probabilities, k=1)[0]
+    food_sprite = generated_food.sprite
+
+    # Randomly generate coordinates for the food's position
+    food_x = random.randint(0, Parameters.WIDTH - food_sprite.get_width())
+    food_y = random.randint(0, Parameters.HEIGHT - food_sprite.get_height())
+
+    # Set the position of the food sprite
+    generated_food.rect.x = food_x
+    generated_food.rect.y = food_y
+
+    with open(generation_log.log_file_path, "a") as log_file:
+        timestamp = Timestamping.log_timestamps()
+        log_file.write(f"{timestamp}Generated food item: '{generated_food.name}'\n")
+
+    # Add the food sprite to the spawning foods group
+
+def generate_initial_foods():
+    max_foods = 20
+    with open(generation_log.log_file_path, "a") as log_file:
+        timestamp = Timestamping.log_timestamps()
+        log_file.write(f"{timestamp}Generating Foods...\n")
+    for _ in range(max_foods):
+        generate_natural_food()
+        timestamp = Timestamping.log_timestamps()
+        print(f"{timestamp}Finished generating foods!\n")
 
 # Define parameters
 population_size = 5
@@ -29,6 +96,9 @@ reproduction_chance = 0.03  # Chance of reproducing in each frame
 speed_multiplier = 1.0  # Initial speed multiplier
 min_speed_multiplier = 0.25
 max_speed_multiplier = 10.0
+
+# Run initial methods
+generate_initial_foods()
 
 # Create a font object for rendering text
 display_font = pygame.font.Font(None, 16)  # You can adjust the font size and style as needed
@@ -75,14 +145,15 @@ class Organism(pygame.sprite.Sprite):
             if self.age > lifespan:
                 self.alive = False
 
-            if len(foods) > 0:
-                closest_food = min(foods, key=lambda food: pygame.math.Vector2(food.rect.center).distance_to(self.rect.center))
-                food_direction = pygame.math.Vector2(closest_food.rect.center) - pygame.math.Vector2(self.rect.center)
-                food_direction = food_direction.normalize()
-                self.velocity = food_direction * self.speed
-            else:
-                # If no food is available, wander randomly
-                self.wander()
+        if len(spawning_foods_group) > 0:
+            closest_food = min(spawning_foods_group, key=lambda food: pygame.math.Vector2(food.rect.center).distance_to(self.rect.center))
+            food_direction = pygame.math.Vector2(closest_food.rect.center) - pygame.math.Vector2(self.rect.center)
+            food_direction = food_direction.normalize()
+            self.velocity = food_direction * self.speed
+        else:
+            # If no food is available, wander randomly
+            self.wander()
+
 
 
             # Update position based on velocity
@@ -133,73 +204,52 @@ def reproduce(organism):
         offspring.max_hunger = 20
         organisms.add(offspring)
 
-class Food(pygame.sprite.Sprite):
     def __init__(self, food_type):
         super().__init__()
         self.food_type = food_type
-        self.image = None
-        self.spawn_food()
+        self.nutrients = 0
+        self.weight = 0
+        self.spawn_probability = 0
 
-    def spawn_food(self):
         if self.food_type == "berry":
             self.image = pygame.Surface((3, 3))
-            self.rect = self.image.get_rect()
             self.image.fill(Colors.RED)
+            self.nutrients = 2
+            self.spawn_probability = 0.03
+            self.weight = 0.5
+
         elif self.food_type == "seed":
             self.image = pygame.Surface((2, 4))
-            self.rect = self.image.get_rect()
             self.image.fill(Colors.BROWN)
+            self.nutrients = 8
+            self.spawn_probability = 0.004
+            self.weight = 0.3
+
+        self.rect = self.image.get_rect()
         self.rect.x = random.randint(0, Parameters.WIDTH)
         self.rect.y = random.randint(0, Parameters.HEIGHT)
 
-class FoodItems:
-    class Berry:
-        food_type = "berry"
-        nutrients = random.randrange(8, 12)
-        weight = round(random.uniform(1, 3) / 10, 1)
-        spawn_probability = 0.005  # Adjust as needed
-        
-        def __init__(self):
-            self.nutrients = random.randrange(8, 12)
-        
-        def get_nutrition_value(self):
-            return self.nutrients * self.weight
+    def get_nutrition_value(self):
+        return self.nutrients * self.weight
 
-    class Seed:
-        food_type = "seed"
-        nutrients = random.randrange(5, 8)
-        weight = round(random.uniform(3, 5) / 10, 1)
-        spawn_probability = 0.003  # Adjust as needed
-        def __init__(self):
-            self.nutrients = random.randrange(5, 8)
-        def get_nutrition_value(self):
-            return self.nutrients * self.weight
-    def __init__(self):
-        self.berry = self.Berry()
-        self.seed = self.Seed()
     
 
 # Create sprite groups
 organisms = pygame.sprite.Group()
-foods = pygame.sprite.Group()
+rocks = pygame.sprite.Group()
+
 
 # Create initial organisms
 for _ in range(population_size):
     organism = Organism(random.randint(0, Parameters.WIDTH), random.randint(0, Parameters.HEIGHT))
     organisms.add(organism)
 
-# Create food
+# In my main.py, how do I get this code to spawn the berrys and nuts in the game, calling from the items I populated from the items file?
 for _ in range(int(Parameters.WIDTH * Parameters.HEIGHT * food_scarcity)):
     # Determine the type of food to spawn based on probabilities
-    food_type = random.choices(["berry", "seed"], [FoodItems.Berry.spawn_probability, FoodItems.Seed.spawn_probability])[0]
+    food_type = random.choices(["berry", "seed"], [food.spawn_probability for food in food_list])[0]
 
-    # Create the corresponding food item
-    if food_type == "berry":
-        food = Food("berry")
-    else:
-        food = Food("seed")
 
-    foods.add(food)
 
 # Game loop
 clock = pygame.time.Clock()
@@ -217,9 +267,13 @@ while running:
                 mouse_x, mouse_y = pygame.mouse.get_pos()
 
                 # Create a new food object at the mouse cursor position
-                food = Food("berry")
-                food.rect.center = (mouse_x, mouse_y)
-                foods.add(food)
+                for Food in food_list:
+                    if Food.name == "Berry":    # Find the "Berry" item in the list of food.
+                        berry = Food
+                        break
+                berry.rect.center = (mouse_x, mouse_y)
+                spawned_food.add(berry)
+
             if event.key == pygame.K_e:
                 # Get the current mouse cursor position
                 mouse_x, mouse_y = pygame.mouse.get_pos()
@@ -235,14 +289,14 @@ while running:
 
             elif event.key == pygame.K_r:  # Reset the game when "R" is pressed
                 organisms.empty()
-                foods.empty()
+                spawned_food.empty()
                 for _ in range(population_size):
                     organism = Organism(random.randint(0, Parameters.WIDTH), random.randint(0, Parameters.HEIGHT))
                     organisms.add(organism)
                 for _ in range(int(Parameters.WIDTH * Parameters.HEIGHT * food_scarcity)):
                     berry = Food("berry")
                     seed = Food("seed")
-                    foods.add(berry, seed)
+                    spawned_food.add(berry, seed)
             elif event.key == pygame.K_SPACE:  # Pause/unpause the game when "Space" is pressed
                 paused = not paused
     
@@ -259,16 +313,17 @@ while running:
                     reproduce(organism)
 
         # Check for collisions
-        hits = pygame.sprite.groupcollide(organisms, foods, False, True)
+        hits = pygame.sprite.groupcollide(organisms, spawning_foods_group, False, True)
         for organism, food_list in hits.items():
 
             for _ in food_list:
                 reproduce(organism)
 
+
     # Draw everything
     screen.fill(Colors.WHITE)
     organisms.draw(screen)
-    foods.draw(screen)
+    spawning_foods_group.draw(screen)
 
     # Calculate and display the total population count
     population_count = len(organisms)
