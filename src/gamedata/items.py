@@ -27,6 +27,7 @@ class Material(Item):
         self.rect = self.sprite.get_rect()
 
 class Foods:
+
     berry_sprite = pygame.Surface((3, 3))
     berry_sprite.fill(Colors.RED)
 
@@ -35,7 +36,7 @@ class Foods:
 
 
     berry = Food("Berry", "A sweet berry", 0.5, "fruit", 3, True, 0.01, berry_sprite)
-    hazelnut = Food("Hazelnut", "A delicious nut", 0.8, "nut", 5, True, 0.005, hazelnut_sprite)
+    hazelnut = Food("Hazelnut", "A delicious nut", 0.8, "nut", 5, True, 0.0003, hazelnut_sprite)
 
 def main():
     #Create Sprite Groups

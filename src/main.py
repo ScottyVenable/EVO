@@ -13,10 +13,12 @@ from gamedata.items import Foods
 import datetime
 import os
 from utils.logging import Timestamping
+import utils.logging
 
 Colors = utils.constants.Colors()
 Parameters = utils.parameters
 ItemDatabase = gamedata.items
+Logging = utils.logging
 
 
 # Initialize Pygame
@@ -24,27 +26,15 @@ pygame.init()
 screen = pygame.display.set_mode((Parameters.WIDTH, Parameters.HEIGHT))
 pygame.display.set_caption("Evolution")
 
-class CreateLog:
-    logs_directory = "logs"
+# Generate Logs
+logs = []
+generation = Logging.CreateLog("generation", "logs")
 
-    def __init__(self, log_filename):
-        self.timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        self.log_file_path = os.path.join(self.logs_directory, f"{log_filename}_{self.timestamp}.txt")
-        os.makedirs(self.logs_directory, exist_ok=True)
-
-    # Create the 'logs' directory if it doesn't exist
-    os.makedirs(logs_directory, exist_ok=True)
-
-generation_log = CreateLog("generation")
+logs.append(generation)
 
 # Populate the Data
 
 food_list = [Foods.berry, Foods.hazelnut]
-
-for food in food_list:
-    # Format the output using string formatting
-    print("FOODS LOADED:")
-    print(f"\n--------\n   Name: {food.name}\n   Description: \"{food.description}\"\n   Weight: {food.weight}\n   Type: {food.item_type}\n   Nutrients: {food.nutrients}\n   Spawns Naturally: {'Yes' if food.spawns_naturally else 'No'}\n   Rarity: {'common' if food.spawn_probability >= 0.008 else 'uncommon' if food.spawn_probability >= 0.005 else 'rare' if food.spawn_probability >= 0.002 else 'very rare'}")
 
 spawning_foods = [] # Create the list of foods that spawn naturally
 
@@ -70,21 +60,22 @@ def generate_natural_food():
     generated_food.rect.x = food_x
     generated_food.rect.y = food_y
 
-    with open(generation_log.log_file_path, "a") as log_file:
+    with open(logs[0].log_file_path, "a") as log_file:
         timestamp = Timestamping.log_timestamps()
-        log_file.write(f"{timestamp}Generated food item: '{generated_food.name}'\n")
+        log_entry = f"{timestamp} gen_item: '{generated_food.name.lower()} (n:{generated_food.nutrients})'\n"
+        log_file.write(log_entry)
+
 
     # Add the food sprite to the spawning foods group
 
 def generate_initial_foods():
     max_foods = 20
-    with open(generation_log.log_file_path, "a") as log_file:
+    with open(logs[0].log_file_path, "a") as log_file:
         timestamp = Timestamping.log_timestamps()
-        log_file.write(f"{timestamp}Generating Foods...\n")
-    for _ in range(max_foods):
-        generate_natural_food()
-        timestamp = Timestamping.log_timestamps()
-        print(f"{timestamp}Finished generating foods!\n")
+        for _ in range(max_foods):
+            generate_natural_food()
+            timestamp = Timestamping.log_timestamps()
+        log_file.write(f"Added {_} items.")
 
 # Define parameters
 population_size = 5
